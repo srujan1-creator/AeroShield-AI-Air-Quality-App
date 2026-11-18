@@ -87,11 +87,15 @@ class CorsiCalcRequest(BaseModel):
 # -----------------------------------------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/api/index.py", response_class=HTMLResponse)
+@app.get("/api/index", response_class=HTMLResponse)
+@app.get("/api", response_class=HTMLResponse)
 async def serve_index():
     """Serves the WCAG 2.1 AAA Accessible Single-Page Application."""
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
-        return FileResponse(index_path)
+        with open(index_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
     return HTMLResponse("<h1>AeroShield AI is Initializing... Please refresh in a moment.</h1>")
 
 
@@ -100,7 +104,8 @@ async def get_favicon():
     """Serves application favicon."""
     fav_path = os.path.join(STATIC_DIR, "favicon.svg")
     if os.path.exists(fav_path):
-        return FileResponse(fav_path, media_type="image/svg+xml")
+        with open(fav_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), media_type="image/svg+xml")
     return JSONResponse(status_code=204, content={})
 
 
