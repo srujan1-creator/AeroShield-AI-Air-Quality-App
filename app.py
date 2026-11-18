@@ -302,6 +302,50 @@ async def run_backend_tests():
     }
 
 
+@app.api_route("/{full_path:path}", methods=["GET", "HEAD"])
+async def catch_all_fallback(request: Request, full_path: str):
+    """
+    Catch-all router for SPA fallback and static resolution.
+    Ensures seamless execution on serverless platforms (Vercel)
+    where internal rewrites or route proxies might target /api/index.py or subpaths.
+    """
+    clean_path = full_path.lstrip("/")
+    
+    # Check if this matches a static asset request
+    if clean_path.startswith("static/"):
+        rel_static = clean_path[len("static/"):]
+        target = os.path.join(STATIC_DIR, rel_static)
+        if os.path.isfile(target):
+            media = (
+                "text/css" if target.endswith(".css")
+                else "application/javascript" if target.endswith(".js")
+                else "image/svg+xml" if target.endswith(".svg")
+                else "image/jpeg" if target.endswith(".jpg") or target.endswith(".jpeg")
+                else None
+            )
+            return FileResponse(target, media_type=media)
+
+    # Check if target file exists directly inside STATIC_DIR
+    direct_target = os.path.join(STATIC_DIR, clean_path)
+    if os.path.isfile(direct_target):
+        media = (
+            "text/css" if direct_target.endswith(".css")
+            else "application/javascript" if direct_target.endswith(".js")
+            else "image/svg+xml" if direct_target.endswith(".svg")
+            else "image/jpeg" if direct_target.endswith(".jpg") or direct_target.endswith(".jpeg")
+            else None
+        )
+        return FileResponse(direct_target, media_type=media)
+
+    # For any web view or SPA navigation, serve index.html
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_path):
+        with open(index_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)
