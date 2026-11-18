@@ -30,15 +30,15 @@ class VercelPathFixMiddleware:
             )
             if matched_path:
                 path_str = matched_path.decode("utf-8").split("?")[0]
-                if path_str in ("/api/index.py", "/api/index", "/api"):
-                    path_str = "/"
+                if path_str in ("/api/index.py", "/api/index"):
+                    path_str = "/api"
                 scope["path"] = path_str
                 scope["raw_path"] = path_str.encode("utf-8")
             else:
                 curr_path = scope.get("path", "")
-                if curr_path in ("/api/index.py", "/api/index", "/api"):
-                    scope["path"] = "/"
-                    scope["raw_path"] = b"/"
+                if curr_path in ("/api/index.py", "/api/index"):
+                    scope["path"] = "/api"
+                    scope["raw_path"] = b"/api"
                 elif curr_path.startswith("/api/index.py/"):
                     sub_path = curr_path[len("/api/index.py"):]
                     scope["path"] = sub_path if sub_path else "/"
